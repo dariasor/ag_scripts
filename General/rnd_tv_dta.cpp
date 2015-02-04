@@ -30,9 +30,9 @@ int main(int argc, char* argv[])
 {
 	try{
 
-	if(argc != 12)	//12 input args (command name excluded) - max, once I reach 13, redo the args properly
+	if(argc != 13)	//12 input args (command name excluded) - max, once I reach 13, redo the args properly
 		throw string("Usage: rnd_tv_dta data_file out_stem rand_seed mtoz|no csv|dta header|no") +
-			string(" test|no|all target_file|no|q group|no group_column test_proportion");
+			string(" test|no|all target_file|no|q group|no group_column valid_proportion train_proportion");
 
 	string mtozstr(argv[4]);
 	bool mtoz = (mtozstr.compare("mtoz") == 0);
@@ -51,7 +51,8 @@ int main(int argc, char* argv[])
 	string groupstr(argv[9]);
 	bool doGroup = (groupstr.compare("group") == 0);
 	int groupNo = atoi(argv[10]) - 1;
-	float prop = atof(argv[11]);
+	float propVal = atof(argv[11]);
+	float propTrain = atof(argv[12]);
 
 	//open files, check that they are there
 	fstream fdata(argv[1], ios_base::in);
@@ -136,7 +137,7 @@ int main(int argc, char* argv[])
 		fstream* pfout;
 		if(all || 
 		   (groupIt != groups.end()) && (groupIt->second == 1) ||
-		   (groupIt == groups.end()) && ((randCoef < (1 - prop * 2)) || (randCoef < (1 - prop)) && !test)
+		   (groupIt == groups.end()) && (randCoef < propTrain)
 		  )
 		{//output to train
 			//if mtoz flag is on, and the first value is -1, replace it with 0
@@ -181,7 +182,7 @@ int main(int argc, char* argv[])
 				groups.insert(simap::value_type(groupID, 1));
 		}
 		else if((groupIt != groups.end()) && (groupIt->second == 2) ||
-				(groupIt == groups.end() && (randCoef >= (1 - prop)))
+				(groupIt == groups.end() && (randCoef >= (1 - propVal)))
 				)
 		{//output to validation
 			//if mtoz flag is on, and the first value is -1, replace it with 0
@@ -225,7 +226,7 @@ int main(int argc, char* argv[])
 			if(doGroup && (groupIt == groups.end()))
 				groups.insert(simap::value_type(groupID, 2));
 		}
-		else 
+		else if(test)
 		{//output to test set
 			//if mtoz flag is on, and the first value is -1, replace it with 0
 			int len = str.size();
