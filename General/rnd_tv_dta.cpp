@@ -1,11 +1,10 @@
 //rnd_tv_dta executable: converts csv or dta files with or without header to randomly split dta files without header
-//(4/5 train, 1/5 validation if no test is needed; 3/5 train, 1/5 validation, 1/5 test otherwise)
 //if all flag is set, everything goes into train file, in which case its name is just stem
 //automatically identifies the empty line after the header
 //extra option: change -1 to 0 in the first column
 //extra option: first column is group column, data point with the same group go to the same split
 //
-//(c) Daria Sorokina, Carnegie Mellon University - Yandex Labs, 2009-2010
+//(c) Daria Sorokina
 
 #pragma warning(disable : 4996)
 #include <fstream>
@@ -112,8 +111,11 @@ int main(int argc, char* argv[])
 	string groupID;
 	simap::iterator groupIt = groups.end();
 
-	while(!fdata.fail())
+	for(int i = 1; !fdata.fail(); i++)
 	{
+          if(i % 100000 == 0)
+            cout << "read " << i << " lines" << endl;
+
 		string str(buf);
 		//trim delimiters at the end
 		while(!str.empty() && (str[str.size() - 1] == delch))
@@ -226,8 +228,10 @@ int main(int argc, char* argv[])
 			if(doGroup && (groupIt == groups.end()))
 				groups.insert(simap::value_type(groupID, 2));
 		}
-		else if(test)
-		{//output to test set
+		else 
+                  {
+                    if(test)
+                      {//output to test set
 			//if mtoz flag is on, and the first value is -1, replace it with 0
 			int len = str.size();
 			if((len > 1) && mtoz && (str[0] == '-') && (str[1] == '1'))
@@ -265,8 +269,8 @@ int main(int argc, char* argv[])
 					ftest << tarstr;
 			}
 			ftest << endl;
-
-			if(doGroup && (groupIt == groups.end()))
+                      }
+		      if(doGroup && (groupIt == groups.end()))
 				groups.insert(simap::value_type(groupID, 3));
 		}
 
