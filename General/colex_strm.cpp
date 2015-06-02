@@ -1,0 +1,87 @@
+//colex_strm: main function of executable colex_strm
+//Simpler version of |Stat colex that allows for larger input lines
+//Takes data from the input stream
+//
+//(c) Daria Sorokina
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <errno.h>
+
+#include <vector>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+
+using namespace std;
+
+typedef vector<int> intv;
+typedef vector<string> stringv;
+
+
+const int lineLen = 150000; //max size that I so far needed
+
+//colex_strm _lineNo1_ _lineNo2_ ...
+int main(int argc, char* argv[])
+{
+	try{
+
+	if(argc < 2)
+		throw string("Usage: colex_strm _colNo1_ _colNo2_ ...\n1 refers to first column.");
+
+	intv columns; //numbers of columns to print
+	char *end;
+	for(int argNo = 1; argNo < argc; argNo++)
+	{
+		long value = strtol(argv[argNo], &end, 10);
+		if(!value)
+			throw string("Usage: colex_strm _colNo1_ _colNo2_ ...\n1 refers to first column.");
+		columns.push_back((int)value);
+	}
+	//read data line by line, from every line output values of requested columns
+	char buf[lineLen];
+	cin.getline(buf, lineLen);
+	int colN = -1;	//number of columns
+	while(!cin.fail())
+	{
+		//convert current line to a set of column values (strings)
+		stringv colVals;
+		string line(buf);
+		stringstream linestr(line.c_str());
+		string singleVal;
+		linestr >> singleVal;
+		while(!linestr.fail())
+		{
+			colVals.push_back(singleVal);
+			linestr >> singleVal;
+		}
+		if(colN == -1)
+			colN = (int)colVals.size();
+		else
+			if(colVals.size() != colN)
+				throw string("Error: number of columns is inconsistent across lines in the input file");
+
+		//output values of requested columns from current line
+		for(intv::iterator colIt = columns.begin(); colIt != columns.end(); colIt++)
+			cout << colVals[*colIt - 1] << "\t";
+		cout << endl;
+
+		cin.getline(buf, lineLen);
+		colVals.clear();
+	}
+
+	}catch(string err){
+		cerr << err << "\n" << endl;
+		return 1;
+	}catch(...){
+		string errstr = strerror(errno);
+		cerr << "Error: " << errstr << endl;
+		return 1;
+	}
+	return 0;
+}
+
+
+
+
