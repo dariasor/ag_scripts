@@ -19,6 +19,14 @@ using namespace std;
 typedef vector<int> intv;
 typedef vector<string> stringv;
 
+void split(const string &s, char delim, stringv &elems) {
+    elems.clear();
+	stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+}
 
 const int lineLen = 150000; //max size that I so far needed
 
@@ -48,14 +56,8 @@ int main(int argc, char* argv[])
 		//convert current line to a set of column values (strings)
 		stringv colVals;
 		string line(buf);
-		stringstream linestr(line.c_str());
-		string singleVal;
-		linestr >> singleVal;
-		while(!linestr.fail())
-		{
-			colVals.push_back(singleVal);
-			linestr >> singleVal;
-		}
+		split(line, '\t', colVals);
+		
 		if(colN == -1)
 			colN = (int)colVals.size();
 		else
