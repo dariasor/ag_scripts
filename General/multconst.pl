@@ -2,19 +2,20 @@
 use strict;
 use warnings "all";
 
-sub Main
+sub Main($)
 {
-     	while (<>) {
+    my $mconst = $_[0];
+    while (<STDIN>) {
         	my $line = $_;
         	chomp($line);
 
 		if ($line eq '?') {
 			print "?\n";
         	} else {
-			my $retval = -1 * $line;
+			my $retval = $mconst * $line;
 			print "$retval\n";
 		}
 	}
 }
 
-Main();
+Main($ARGV[0]);
