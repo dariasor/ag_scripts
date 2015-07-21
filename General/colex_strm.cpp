@@ -4,6 +4,8 @@
 //
 //(c) Daria Sorokina
 
+#pragma warning(disable : 4996)
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -65,8 +67,12 @@ int main(int argc, char* argv[])
 				throw string("Error: number of columns is inconsistent across lines in the input file");
 
 		//output values of requested columns from current line
-		for(intv::iterator colIt = columns.begin(); colIt != columns.end(); colIt++)
-			cout << colVals[*colIt - 1] << "\t";
+		for (int outColNo = 0; outColNo < (int)columns.size(); outColNo++)
+		{
+			if (outColNo > 0)
+				cout << "\t";
+			cout << colVals[columns[outColNo] - 1];
+		}
 		cout << endl;
 
 		cin.getline(buf, lineLen);
