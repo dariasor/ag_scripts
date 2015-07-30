@@ -25,7 +25,6 @@ int main(int argc, char* argv[])
 {
 	try{
 
-cout << "test0\n";
 	//check presence of input arguments
 	if(argc != 3)
 		throw string("Usage: prob_roc _targets_ _predictions_");
@@ -47,18 +46,26 @@ cout << "test0\n";
 		tars.push_back(hold);
 		ftar >> hold;
 	}
+	if(!ftar.eof())
+		throw string("Error: non-numeric values in the targets file");
+	
 	fpred >> hold;
 	while(!fpred.fail())
 	{
 		preds.push_back(hold);
 		fpred >> hold;
 	}
+	if(!fpred.eof())
+		throw string("Error: non-numeric values in the predictions file");
+
 	if(tars.size() != preds.size())
+	{
+		cerr << tars.size() << ' ' << preds.size() << endl;
 		throw string("Error: different number of values in targets and predictions files");
+	}
 
 	int itemN = tars.size();
 
-cout << "test1\n";	
 //************
 
 	ddpairv data(itemN);
@@ -76,7 +83,7 @@ cout << "test1\n";
 
 	doublev fraction(itemN);
 	int item = 0;
-cout << "test2\n";
+
 	while(item < itemN)
 	{
 		int begin = item;
@@ -88,7 +95,7 @@ cout << "test2\n";
 		for(int i = begin; i < item; i++)
 			fraction[i] = curFrac;
     }
-cout << "test3\n";
+
 	double tt = 0; 
 	double tf = 0; 
 	double ft = 0; 
@@ -104,7 +111,7 @@ cout << "test3\n";
 	double roc_area = 0.0;
 	double tpf_prev = 0;
 	double fpf_prev = 0;
-cout << "test4\n";
+
 	for(item = itemN - 1; item > -1; item--)
     {
 		tt += fraction[item];
@@ -117,12 +124,12 @@ cout << "test4\n";
 		tpf_prev = tpf;
 		fpf_prev = fpf;
     }
-cout << "test5\n";
+
 	cout << "AUC: " << roc_area << endl;
 	cout.flush();
 
 	}catch(string err){
-		cerr << "Error: " << err << endl;
+		cerr << err << endl;
 		return 1;
 	}catch(...){
 		string errstr = strerror(errno);
