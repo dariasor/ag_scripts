@@ -2,10 +2,11 @@
 //takes 
 	//- either an "all cont" attribute file, or a list of attributes, one name per line in the right order 
 	//- the data file
+	//- the name of the class attribute
 //produces a new attribute file with boolean features
 //marked as "0,1" and useless (only 0 values) features as "never"
 //important note: it looses all information about original types of attributes (in particular, nominals), 
-//inactive attributes and class atribute. All this information has to be restored in the new file manually.
+//and inactive attributes. All this information has to be restored in the new file manually.
 
 #pragma warning(disable : 4996) //complaints about strerror function
 
@@ -47,8 +48,8 @@ int main(int argc, char* argv[])
 {
 	try{
 	//check presence of input arguments
-	if(argc != 4)
-		throw string("Usage: attrbool _attr_file_ _data_file_ _new_attr_file_");
+	if(argc != 5)
+		throw string("Usage: attrbool _attr_file_ _data_file_ _new_attr_file_ _target_name_");
 
 	//open files, check that they are there
 	fstream fattr(argv[1], ios_base::in);
@@ -62,6 +63,8 @@ int main(int argc, char* argv[])
 	fstream fnew(argv[3], ios_base::out);
 	if(!fnew)
 		throw string("Error: failed to open data file ") + string(argv[3]);
+
+	string tarName(argv[4]);
 
 	//Read attribute file	
 	
@@ -116,18 +119,18 @@ int main(int argc, char* argv[])
 	{
 		fnew << attrNames[attrNo] << ": ";
 		if(attrFlags[attrNo] == 2)
-			fnew << "cont." << endl;
+			fnew << "cont"; 
 		else
-			fnew << "0,1." << endl;
+			fnew << "0,1";
+		if (tarName.compare(attrNames[attrNo]) == 0)
+			fnew << "(class)";
+
+		fnew << "." << endl;
 	}
 	fnew << "contexts:" << endl;
 	for(int attrNo = 0; attrNo < attrN; attrNo++)
 		if(attrFlags[attrNo] == 0)
 			fnew << attrNames[attrNo] << " never" << endl;
-
-	string warn("\n\n\nDon't forget to add \"class\", \"nom\" and old \"never\" info to the new attribute file!");
-	fnew << warn << endl;
-	cout << warn << endl;
 	fnew.close();
 
 	}catch(string err){
