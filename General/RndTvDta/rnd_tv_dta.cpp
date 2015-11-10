@@ -50,8 +50,8 @@ int main(int argc, char* argv[])
 	string groupstr(argv[9]);
 	bool doGroup = (groupstr.compare("group") == 0);
 	int groupNo = atoi(argv[10]) - 1;
-	float propVal = atof(argv[11]);
-	float propTrain = atof(argv[12]);
+	double propVal = atof(argv[11]);
+	double propTrain = atof(argv[12]);
 
 	//open files, check that they are there
 	fstream fdata(argv[1], ios_base::in);
@@ -136,7 +136,6 @@ int main(int argc, char* argv[])
 		}
 
 		double randCoef = (double) rand() / RAND_MAX;
-		fstream* pfout;
 		if(all || 
 		   (groupIt != groups.end()) && (groupIt->second == 1) ||
 		   (groupIt == groups.end()) && (randCoef < propTrain)
@@ -160,12 +159,15 @@ int main(int argc, char* argv[])
 			while(str.size() != 0)
 			{
 				string::size_type delim = str.find(delch);
+				string field = str.substr(0, delim);
+				if (field.empty())
+					field = "?";
+				ftrain << field;
+
 				if(delim == string::npos)
-				{
-					ftrain << str;
 					break;
-				}		
-				ftrain << str.substr(0, delim) << '\t';
+
+				ftrain << '\t';
 				str = str.substr(delim + 1);
 			}
 
@@ -205,12 +207,15 @@ int main(int argc, char* argv[])
 			while(str.size() != 0)
 			{
 				string::size_type delim = str.find(delch);
+				string field = str.substr(0, delim);
+				if(field.empty())
+					field = "?";
+				fvalid << field;
+
 				if(delim == string::npos)
-				{
-					fvalid << str;
 					break;
-				}		
-				fvalid << str.substr(0, delim) << '\t';
+
+				fvalid << '\t';
 				str = str.substr(delim + 1);
 			}
 
@@ -227,50 +232,51 @@ int main(int argc, char* argv[])
 
 			if(doGroup && (groupIt == groups.end()))
 				groups.insert(simap::value_type(groupID, 2));
-		}
-		else 
-                  {
-                    if(test)
-                      {//output to test set
-			//if mtoz flag is on, and the first value is -1, replace it with 0
-			int len = str.size();
-			if((len > 1) && mtoz && (str[0] == '-') && (str[1] == '1'))
-			{
-				ftest << '0';
-				if(len == 2)
+		} else {
+            if(test)
+			{//output to test set
+				//if mtoz flag is on, and the first value is -1, replace it with 0
+				int len = str.size();
+				if((len > 1) && mtoz && (str[0] == '-') && (str[1] == '1'))
 				{
-					ftest << endl;
-					continue;
+					ftest << '0';
+					if(len == 2)
+					{
+						ftest << endl;
+						continue;
+					}
+					ftest << '\t';
+					str = str.substr(3);
 				}
-				ftest << '\t';
-				str = str.substr(3);
-			}
 
-			//output the rest of the line, replacing commas with tabs
-			while(str.size() != 0)
-			{
-				string::size_type delim = str.find(delch);
-				if(delim == string::npos)
+				//output the rest of the line, replacing commas with tabs
+				while(str.size() != 0)
 				{
-					ftest << str;
-					break;
-				}		
-				ftest << str.substr(0, delim) << '\t';
-				str = str.substr(delim + 1);
-			}
+					string::size_type delim = str.find(delch);
+					string field = str.substr(0, delim);
+					if (field.empty())
+						field = "?";
+					ftest << field;
 
-			//attach target as the last column, if it is separate
-			if(target || tarq)
-			{
-				ftest << '\t';
-				if(tarq)
-					ftest << '?';
-				else if(target)
-					ftest << tarstr;
+					if (delim == string::npos)
+						break;
+
+					ftest << '\t';
+					str = str.substr(delim + 1);
+				}
+
+				//attach target as the last column, if it is separate
+				if(target || tarq)
+				{
+					ftest << '\t';
+					if(tarq)
+						ftest << '?';
+					else if(target)
+						ftest << tarstr;
+				}
+				ftest << endl;
 			}
-			ftest << endl;
-                      }
-		      if(doGroup && (groupIt == groups.end()))
+			if(doGroup && (groupIt == groups.end()))
 				groups.insert(simap::value_type(groupID, 3));
 		}
 
