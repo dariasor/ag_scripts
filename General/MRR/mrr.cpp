@@ -24,8 +24,9 @@ typedef pair<double, double> ddpair;
 typedef vector<ddpair> ddpairv;
 typedef set<int> intset;
 typedef vector<int> intv;
-typedef pair<int, int> iipair;
-typedef vector<iipair> iipairv;
+typedef pair<string, int> sipair;
+typedef vector<sipair> sipairv;
+typedef vector<string> stringv;
 
 bool greater1(const ddpair& d1, const ddpair& d2)
 {
@@ -53,15 +54,15 @@ double rr(doublev::iterator preds, doublev::iterator tars, int itemN)
 }
 
 //rr averaged across groups
-double mrr(doublev& preds_in, doublev& tars_in, intv& groups_in, bool sorted)
+double mrr(doublev& preds_in, doublev& tars_in, stringv& groups_in, bool sorted)
 {
 	//if the data is not sorted by group, create sorted copies of all input arrays
 	int itemN = (int)preds_in.size();
 	doublev preds_s, tars_s; 
-	intv groups_s;
+	stringv groups_s;
 	if(!sorted)
 	{
-		iipairv groupids;
+		sipairv groupids;
 		groupids.resize(itemN);
 		for(int itemNo = 0; itemNo < itemN; itemNo++)
 		{
@@ -82,16 +83,16 @@ double mrr(doublev& preds_in, doublev& tars_in, intv& groups_in, bool sorted)
 	}
 	doublev& preds = sorted ? preds_in : preds_s;
 	doublev& tars = sorted ? tars_in : tars_s;
-	intv& groups = sorted ? groups_in : groups_s;
+	stringv& groups = sorted ? groups_in : groups_s;
 
 	//now calculate rr for every group
 	double meanVal = 0;
 	int groupN = 0;
 	int curBegins = 0;
-	int curGr = groups[0];
+	string curGr = groups[0];
 	for(int itemNo = 0; itemNo < itemN; itemNo++)
 	{
-		if((itemNo == itemN - 1) || (groups[itemNo + 1] != curGr))
+		if((itemNo == itemN - 1) || (groups[itemNo + 1].compare(curGr) != 0))
 		{
 			groupN++;
 			meanVal += rr(preds.begin() + curBegins, tars.begin() + curBegins, itemNo + 1 - curBegins);
@@ -130,25 +131,26 @@ int main(int argc, char* argv[])
 
 	//load target and prediction values;
 	doublev tars, preds; 
-	intv groups;
-	double hold;
-	ftar >> hold;
+	stringv groups;
+	double hold_d;
+	string hold_s;
+	ftar >> hold_d;
 	while(!ftar.fail())
 	{
-		tars.push_back(hold);
-		ftar >> hold;
+		tars.push_back(hold_d);
+		ftar >> hold_d;
 	}
-	fpred >> hold;
+	fpred >> hold_d;
 	while(!fpred.fail())
 	{
-		preds.push_back(hold);
-		fpred >> hold;
+		preds.push_back(hold_d);
+		fpred >> hold_d;
 	}
-	fgroup >> hold;
+	fgroup >> hold_s;
 	while(!fgroup.fail())
 	{
-		groups.push_back((int)hold);
-		fgroup >> hold;
+		groups.push_back(hold_s);
+		fgroup >> hold_s;
 	}
 	if(tars.size() != preds.size())
 		throw string("Error: different number of values in targets and predictions files");
