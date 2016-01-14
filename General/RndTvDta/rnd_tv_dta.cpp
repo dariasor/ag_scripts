@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
 		throw string("Usage: rnd_tv_dta data_file out_stem rand_seed mtoz|no csv|dta header|no") +
 			string(" test|no|all target_file|no|q group|no group_column valid_proportion train_proportion");
 
+	string stem(argv[2]);
 	string mtozstr(argv[4]);
 	bool mtoz = (mtozstr.compare("mtoz") == 0);
 	string csvstr(argv[5]);
@@ -58,19 +59,25 @@ int main(int argc, char* argv[])
 	if(!fdata)
 		throw string("Error: failed to open file ") + string(argv[1]);
 
-	string trainFName(argv[2]);
+	string trainFName(stem);
 	if(!all)
-		trainFName += ".train.dta";
+		trainFName += ".train";
+	trainFName += ".dta";
+
 	fstream ftrain(trainFName.c_str(), ios_base::out);
 	if(!ftrain)
 		throw string("Error: failed to open file ") + trainFName;
 
-	string validFName(string(argv[2]) + ".valid.dta");
-	fstream fvalid(validFName.c_str(), ios_base::out);
-	if(!fvalid)
-		throw string("Error: failed to open file ") + validFName;
+	string validFName(stem + ".valid.dta");
+	fstream fvalid;
+	if(!all)
+	{
+		fvalid.open(validFName.c_str(), ios_base::out);
+		if(!fvalid)
+			throw string("Error: failed to open file ") + validFName;
+	}
 
-	string testFName(string(argv[2]) + ".test.dta");
+	string testFName(stem + ".test.dta");
 	fstream ftest;
 	if(test)
 	{
