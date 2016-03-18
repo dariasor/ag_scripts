@@ -28,6 +28,15 @@ typedef pair<string, int> sipair;
 typedef vector<sipair> sipairv;
 typedef vector<string> stringv;
 
+double atofExt(string str)
+{
+	char *end;
+	double value = strtod(str.c_str(), &end);
+	if((end == str) || (*end != '\0'))
+		throw string("Error: non-numeric value \"") + string(str) + string("\"");
+	return value;
+}
+
 bool greater1(const ddpair& d1, const ddpair& d2)
 {
 	return (d1.first > d2.first);
@@ -140,11 +149,13 @@ int main(int argc, char* argv[])
 		tars.push_back(hold_d);
 		ftar >> hold_d;
 	}
-	fpred >> hold_d;
+	fpred >> hold_s;
+	hold_d = atofExt(hold_s);
 	while(!fpred.fail())
 	{
 		preds.push_back(hold_d);
-		fpred >> hold_d;
+		fpred >> hold_s;
+		hold_d = atofExt(hold_s);
 	}
 	fgroup >> hold_s;
 	while(!fgroup.fail())
