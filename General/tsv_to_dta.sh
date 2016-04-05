@@ -12,12 +12,12 @@ unused=copy.$3
 
 head -1 $stem.tsv | tr '\t' '\n' > $features
 
-rnd_tv_dta $stem.tsv $stem 1 no dta header all no no 1 0.0 1.0
+rnd_tv_dta --input $stem.tsv --stem $stem --header --files-n 1
 
 attrbool $features $stem.dta $stem.attr $2
 
 cp $3 $unused
-perl -pi -e 's/\n/ never\n/g' $unused
+perl -pi -e 's/(.)$/$1 never/g' $unused
 cat $unused >> $stem.attr
 
 rm $features

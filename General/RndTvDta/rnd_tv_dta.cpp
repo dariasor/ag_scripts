@@ -153,7 +153,7 @@ valid_flt is the proportion of the data that should go into the validation set. 
 		throw usage;
 
 	//open files, check that they are there
-	fstream fdata(fName, ios_base::in);
+	fstream fdata(fName.c_str(), ios_base::in);
 	if(!fdata)
 		throw string("Error: failed to open file ") + string(fName);
 
