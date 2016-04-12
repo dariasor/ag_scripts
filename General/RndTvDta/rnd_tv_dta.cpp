@@ -285,23 +285,25 @@ valid_flt is the proportion of the data that should go into the validation set. 
 
 void outStr(string& str_in, fstream& fout, char delch, bool outDta)
 {
-		//output the line, replacing commas with tabs
-		string str(str_in);
-		while(str.size() != 0)
-		{
-			string::size_type delim = str.find(delch);
-			string field = str.substr(0, delim);
-			if(field.empty() && outDta)
-				field = "?";
-			fout << field;
+	if(str_in.empty())
+		return;
+	//output the line, replacing commas with tabs
+	string str(str_in);
+	while(true)
+	{
+		string::size_type delim = str.find(delch);
+		string field = str.substr(0, delim);
+		if(field.empty() && outDta)
+			field = "?";
+		fout << field;
 
-			if(delim == string::npos)
-				break;
+		if(delim == string::npos)
+			break;
 
-			fout << '\t';
-			str = str.substr(delim + 1);
-		}
-		fout << endl;
+		fout << '\t';
+		str = str.substr(delim + 1);
+	}
+	fout << endl;
 }
 
 //converts string to int, throws error if the string is unconvertable

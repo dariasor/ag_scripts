@@ -8,7 +8,7 @@ fi
 
 stem=$1
 features=$stem.feature_names.txt
-unused=copy.$3
+unused=$3.copy
 
 head -1 $stem.tsv | tr '\t' '\n' > $features
 
