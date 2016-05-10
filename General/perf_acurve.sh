@@ -16,7 +16,7 @@ do
 	then
 	    params=a.$a.b.$3
 	    echo -e -n "$a\t"
-	    $4 $5 bt.$params.preds.txt | awk '{printf "%s", $2}'
+	    $4 $5 preds.$params.txt | awk '{printf "%s", $2}'
 	    echo
 	fi
 done

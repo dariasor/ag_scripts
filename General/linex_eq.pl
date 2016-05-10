@@ -11,7 +11,7 @@ sub Main($$)
         	chomp($line);
 
 		if (length $line) {
-		    my @features = split(' ', $line);
+		    my @features = split('\t', $line);
 			if($features[$classNo - 1] == $value) {
 				print "$line\n";
 			}

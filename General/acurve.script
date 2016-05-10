@@ -47,6 +47,7 @@ do
 				if [ "$6" -ne "-1" ]; then
 					mv $3.fs.attr $3.a.$a.b.$b.fs.attr
 				fi
+				mv preds.txt preds.a.$a.b.$b.txt
 			fi
 		done
 	fi
