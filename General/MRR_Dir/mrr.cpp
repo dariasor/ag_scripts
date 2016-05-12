@@ -143,19 +143,28 @@ int main(int argc, char* argv[])
 	stringv groups;
 	double hold_d;
 	string hold_s;
-	ftar >> hold_d;
-	while(!ftar.fail())
-	{
-		tars.push_back(hold_d);
-		ftar >> hold_d;
-	}
 	fpred >> hold_s;
-	hold_d = atofExt(hold_s);
+	try
+	{
+		hold_d = atofExt(hold_s);
+	}
+	catch(...) {
+		//header present, remove it form other columns
+		ftar >> hold_d;
+		fgroup >> hold_s;
+	}
+
 	while(!fpred.fail())
 	{
 		preds.push_back(hold_d);
 		fpred >> hold_s;
 		hold_d = atofExt(hold_s);
+	}
+	ftar >> hold_d;
+	while(!ftar.fail())
+	{
+		tars.push_back(hold_d);
+		ftar >> hold_d;
 	}
 	fgroup >> hold_s;
 	while(!fgroup.fail())
