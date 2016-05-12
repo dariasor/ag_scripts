@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 	}
 	catch(...) {
 		//header present, remove it form all columns
-		ftar >> hold_d;
+		ftar >> hold_s;
 		fgroup >> hold_s;
 		fpred >> hold_s;
 		hold_d = atofExt(hold_s);
