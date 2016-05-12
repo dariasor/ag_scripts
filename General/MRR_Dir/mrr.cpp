@@ -149,9 +149,11 @@ int main(int argc, char* argv[])
 		hold_d = atofExt(hold_s);
 	}
 	catch(...) {
-		//header present, remove it form other columns
+		//header present, remove it form all columns
 		ftar >> hold_d;
 		fgroup >> hold_s;
+		fpred >> hold_s;
+		hold_d = atofExt(hold_s);
 	}
 
 	while(!fpred.fail())
