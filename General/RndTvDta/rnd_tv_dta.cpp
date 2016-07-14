@@ -53,7 +53,7 @@ outtype_str identifies the format of the output file. \"dta\" for TreeExtra form
 --header\n\t\
 Indicates that the input file has header, by default it does not\n\n\
 --files-n files_int\n\t\
-files_int indicates the number of the output files : 1, 2 or 3. 2 means split into training and validation, 3 means training, validation and test.\n\n\
+files_int indicates the number of the output files : 1, 2 or 3. 2 means split into training and validation, 3 means training, validation and test. Default = 2.\n\n\
 --group group_int\n\t\
 group_int is the number of the column containing group values. 0 means no such column exists. Data points with identical group values end up in the same output file. Default = 0.\n\n\
 --train train_flt\n\t\
