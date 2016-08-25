@@ -1,8 +1,9 @@
 //rnd_tv_dta executable: converts csv or dta files with or without header to randomly split dta files without header
 //if all flag is set, everything goes into train file, in which case its name is just stem
-//automatically identifies the empty line after the header
+//automatically identifies the empty line after the header. 
+//for more information see --help output.
 //
-//(c) Daria Sorokina
+//(c) Daria Sorokina, Yichen Zhou
 
 #pragma warning(disable : 4996)
 #include <fstream>
@@ -39,7 +40,7 @@ int main(int argc, char* argv[])
 {
 	try{
 
-	string usage("Usage: rnd_tv_dta --input file_str --stem stem_str [--rand rand_int] [--in delim_str] [--out outtype_str] [--header] [--files-n files_int] [--group group_int] [--train train_flt] [--valid valid_flt] \n\n\
+	string usage("Usage: rnd_tv_dta --input file_str --stem stem_str [--rand rand_int] [--in delim_str] [--out outtype_str] [--header] [--files-n files_int] [--group group_int] [--group-method group_method] [--train train_flt] [--valid valid_flt] \n\n\
 --input file_str\n\t\
 file_str is the input file name, required parameter\n\n\
 --stem stem_str\n\t\
@@ -57,9 +58,11 @@ files_int indicates the number of the output files : 1, 2 or 3. 2 means split in
 --group group_int\n\t\
 group_int is the number of the column containing group values. 0 means no such column exists. Data points with identical group values end up in the same output file. Default = 0.\n\n\
 --train train_flt\n\t\
-train_flt is the proportion of the data that should go into the training set. Default = 0.5\n\n\
+train_flt is the proportion of the data that should go into the training set. Default = 0.5.\n\n\
 --valid valid_flt\n\t\
-valid_flt is the proportion of the data that should go into the validation set. Default = 0.5\n\n\
+valid_flt is the proportion of the data that should go into the validation set. Default = 0.5.\n\n\
+--group-method group_method\n\t\
+group_method decides how we sample the points when grouping is on. 0: sample groups, keep all points in a group; 1: sample points from different groups for each data set. Default = 0.\n\n\
 		");
 
 	//mandatory arguments
@@ -69,8 +72,10 @@ valid_flt is the proportion of the data that should go into the validation set. 
 	//set up default values of extra arguments
 	char delch = '\t';
 	bool hasHeader = false, all = false, test = false, doGroup = false, outDta = true;
+	int groupMethod = 0;
 	int groupNo = 0, seed = 1;
 	double propVal = 0.5, propTrain = 0.5;
+	double groupPropVal = 1, groupPropTrain = 1;
 	string outType("dta");
 
 	//convert input parameters to string from char*
@@ -141,6 +146,8 @@ valid_flt is the proportion of the data that should go into the validation set. 
 			groupNo = atoiExt(argv[argNo]) - 1;
 			doGroup = (groupNo >= 0);
 		}
+		else if(!args[argNo - 1].compare("--group-method"))
+			groupMethod = atoiExt(argv[argNo]);
 		else if(!args[argNo - 1].compare("--train"))
 			propTrain = atofExt(argv[argNo]);
 		else if(!args[argNo - 1].compare("--valid"))
@@ -151,6 +158,29 @@ valid_flt is the proportion of the data that should go into the validation set. 
 
 	if(!(hasInput && hasStem))
 		throw usage;
+
+	//decide the proportion of each group
+	if(doGroup && (groupMethod == 1)){
+		if(all)  //only train
+		{
+			groupPropTrain = 1.0;
+			groupPropVal = 0;
+		}
+		else if(test)  //all train, valid and test
+		{
+			groupPropTrain = 0.333;
+			groupPropVal = 0.333;
+			propTrain /= groupPropTrain;
+			propVal /= groupPropVal;
+		}
+		else  //train and valid
+		{
+			groupPropTrain = 0.5;
+			groupPropVal = 0.5;
+			propTrain /= groupPropTrain;
+			propVal /= groupPropVal;
+		}
+	}
 
 	//open files, check that they are there
 	fstream fdata(fName.c_str(), ios_base::in);
@@ -212,48 +242,97 @@ valid_flt is the proportion of the data that should go into the validation set. 
 	string groupID;
 	simap::iterator groupIt = groups.end();
 
-	for(int i = 1; !fdata.fail(); i++)
+	if(!doGroup || (groupMethod == 0))
 	{
-          if(i % 100000 == 0)
-            cout << "read " << i << " lines" << endl;
-
-		string str(buf);
-
-		if(doGroup)
+		for(int i = 1; !fdata.fail(); i++)
 		{
-			string::size_type prevDelim = -1;
-			for(int colNo = 0; colNo < groupNo; colNo++)
-				prevDelim = str.find(delch, prevDelim + 1);
-			string::size_type delim = str.find(delch, prevDelim + 1);
-			groupID = str.substr(prevDelim + 1, delim - prevDelim - 1);
-			groupIt = groups.find(groupID);
-		}
+			if(i % 100000 == 0) cout << "read " << i << " lines" << endl;
 
-		enum DATASET dataset;
-		double randCoef = (double) rand() / RAND_MAX;
-		if(all || 
-		   (groupIt != groups.end()) && (groupIt->second == 1) ||
-		   (groupIt == groups.end()) && (randCoef < propTrain)
-		  )
-		{//output to train
-			outStr(str, ftrain, delch, outDta);
-			dataset = TRAIN;
-		}
-		else if((groupIt != groups.end()) && (groupIt->second == 2) ||
-				(groupIt == groups.end() && (randCoef >= (1 - propVal)))
-				)
-		{//output to validation
-			outStr(str, fvalid, delch, outDta);
-			dataset = VALID;
-		} else {
-            if(test) //output to test 
-				outStr(str, ftest, delch, outDta);
-			dataset = TEST;
-		}
-		if(doGroup && (groupIt == groups.end()))
-			groups.insert(simap::value_type(groupID, dataset));
+				string str(buf);
 
-		fdata.getline(buf, lineLen); 
+				if(doGroup)
+				{
+					string::size_type prevDelim = -1;
+					for(int colNo = 0; colNo < groupNo; colNo++)
+						prevDelim = str.find(delch, prevDelim + 1);
+					string::size_type delim = str.find(delch, prevDelim + 1);
+					groupID = str.substr(prevDelim + 1, delim - prevDelim - 1);
+					groupIt = groups.find(groupID);
+				}
+
+				enum DATASET dataset;
+				double randCoef = (double) rand() / RAND_MAX;
+				if(all || 
+					(groupIt != groups.end()) && (groupIt->second == 1) ||
+					(groupIt == groups.end()) && (randCoef < propTrain)
+				  )
+				{//output to train
+					outStr(str, ftrain, delch, outDta);
+					dataset = TRAIN;
+				}
+				else if((groupIt != groups.end()) && (groupIt->second == 2) ||
+						(groupIt == groups.end() && (randCoef >= (1 - propVal)))
+						)
+				{//output to validation
+					outStr(str, fvalid, delch, outDta);
+					dataset = VALID;
+				} else {
+					if(test) //output to test 
+						outStr(str, ftest, delch, outDta);
+					dataset = TEST;
+				}
+				if(doGroup && (groupIt == groups.end()))
+					groups.insert(simap::value_type(groupID, dataset));
+
+				fdata.getline(buf, lineLen); 
+		}
+	}
+	else if(groupMethod == 1)
+	{
+		for(int i = 1; !fdata.fail(); i++)
+		{
+			if(i % 100000 == 0) cout << "read " << i << " lines" << endl;
+			string str(buf);
+
+			if(doGroup)
+			{
+				string::size_type prevDelim = -1;
+				for(int colNo = 0; colNo < groupNo; colNo++)
+					prevDelim = str.find(delch, prevDelim + 1);
+				string::size_type delim = str.find(delch, prevDelim + 1);
+				groupID = str.substr(prevDelim + 1, delim - prevDelim - 1);
+				groupIt = groups.find(groupID);
+			}
+
+			enum DATASET dataset;
+			double randGroupCoef = (double) rand() / RAND_MAX;
+			double randCoef = (double) rand() / RAND_MAX;
+			if(all || 
+			   ((groupIt != groups.end()) && (groupIt->second == 1)) ||
+			   ((groupIt == groups.end()) && (randGroupCoef < groupPropTrain))
+			  )
+			{//output to train
+				if(randCoef < propTrain) 
+					outStr(str, ftrain, delch, outDta);
+				dataset = TRAIN;
+			}
+			else if(((groupIt != groups.end()) && (groupIt->second == 2)) ||
+					((groupIt == groups.end()) && (randGroupCoef >= 1 - groupPropVal))
+					)
+			{//output to validation
+				if(randCoef < propVal) 
+					outStr(str, fvalid, delch, outDta);
+				dataset = VALID;
+			} else {
+				if(test) //output to test 
+					outStr(str, ftest, delch, outDta);
+				dataset = TEST;
+			}
+			if(doGroup && (groupIt == groups.end()))
+				groups.insert(simap::value_type(groupID, dataset));
+
+			fdata.getline(buf, lineLen); 
+		}
 	}
 
 	fdata.close();
