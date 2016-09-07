@@ -1,7 +1,7 @@
-//rnd_tv_dta executable: converts csv or dta files with or without header to randomly split dta files without header
+//rnd_tv_dta executable: converts csv or dta files with or without header to randomly split files
 //if all flag is set, everything goes into train file, in which case its name is just stem
 //automatically identifies the empty line after the header. 
-//for more information see --help output.
+//for more information see --help.
 //
 //(c) Daria Sorokina, Yichen Zhou
 
