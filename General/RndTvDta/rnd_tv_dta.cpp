@@ -12,6 +12,9 @@
 #include <errno.h>
 #include <string.h>
 #include <algorithm>
+#include <functional> 
+#include <cctype>
+#include <locale>
 
 
 #include <string>
@@ -35,11 +38,10 @@ enum DATASET
 void outStr(string& str, fstream& fout, char delch, bool outDta);
 int atoiExt(char* str);
 double atofExt(char* str);
+string trim(string &s);
 
 int main(int argc, char* argv[])
 {
-	try{
-
 	string usage("Usage: rnd_tv_dta --input file_str --stem stem_str [--rand rand_int] [--in delim_str] [--out outtype_str] [--header] [--files-n files_int] [--group group_int] [--group-method group_method] [--train train_flt] [--valid valid_flt] \n\n\
 --input file_str\n\t\
 file_str is the input file name, required parameter\n\n\
@@ -64,6 +66,7 @@ valid_flt is the proportion of the data that should go into the validation set. 
 --group-method group_method\n\t\
 group_method decides how we sample the points when grouping is on. 0: sample groups, keep all points in a group; 1: sample points from different groups for each data set. Default = 0.\n\n\
 		");
+	try{
 
 	//mandatory arguments
 	string fName(""), stem("");
@@ -346,7 +349,10 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 
 	}
 	catch(string err){
-		cerr << err << endl;
+		if(err.compare(usage) == 0)
+			cout << err << endl;
+		else
+			cerr << err << endl;
 		return 1;
 	}
 	catch(exception &e){
@@ -371,7 +377,7 @@ void outStr(string& str_in, fstream& fout, char delch, bool outDta)
 	while(true)
 	{
 		string::size_type delim = str.find(delch);
-		string field = str.substr(0, delim);
+		string field = trim(str.substr(0, delim));
 		if(field.empty() && outDta)
 			field = "?";
 		fout << field;
@@ -405,3 +411,14 @@ double atofExt(char* str)
 		throw  "Error: non-numeric value for a numeric argument.\n";
 	return value;
 }
+
+//slightly modified trim function from stack overflow by Evan Teran
+//http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+string trim(string &s) {
+    s.erase(s.begin(), find_if(s.begin(), s.end(),
+            not1(ptr_fun<int, int>(isspace))));
+    s.erase(find_if(s.rbegin(), s.rend(),
+            not1(ptr_fun<int, int>(isspace))).base(), s.end());
+	return s;
+}
+

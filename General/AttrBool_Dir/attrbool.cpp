@@ -5,7 +5,7 @@
 	//- the name of the class attribute
 //produces a new attribute file with boolean features
 //marked as "0,1" and useless (only 0 values) features as "never"
-//important note: it looses all information about original types of attributes (in particular, nominals), 
+//important note: it loses all information about original types of attributes (in particular, nominals), 
 //and inactive attributes. All this information has to be restored in the new file manually.
 
 #pragma warning(disable : 4996) //complaints about strerror function
