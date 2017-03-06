@@ -38,7 +38,7 @@ enum DATASET
 void outStr(string& str, fstream& fout, char delch, bool outDta);
 int atoiExt(char* str);
 double atofExt(char* str);
-string trim(string &s);
+string trim(string s);
 
 int main(int argc, char* argv[])
 {
@@ -414,7 +414,7 @@ double atofExt(char* str)
 
 //slightly modified trim function from stack overflow by Evan Teran
 //http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-string trim(string &s) {
+string trim(string s) {
     s.erase(s.begin(), find_if(s.begin(), s.end(),
             not1(ptr_fun<int, int>(isspace))));
     s.erase(find_if(s.rbegin(), s.rend(),
