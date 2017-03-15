@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include <errno.h>
 #include <string.h>
 
@@ -87,9 +88,9 @@ int main(int argc, char* argv[])
 
 	//figure out level thresholds
 	int thresh[3];
-	thresh[0] = itemN / 500;
-	thresh[1] = itemN / 100;
-	thresh[2] = itemN / 50;
+	thresh[0] = min(itemN / 500, 100);
+	thresh[1] = min(itemN / 100, 500);
+	thresh[2] = min(itemN / 50, 1000);
 
 	strimapv counts(nomAttrN);
 	//work through nominals, figure out the required modifications
