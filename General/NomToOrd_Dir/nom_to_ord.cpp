@@ -146,7 +146,8 @@ int main(int argc, char* argv[])
 			    cout << countIt->second.first;
 			  nomNo++;
 			}
-			cout << "\t";
+			if(attrNo < attrN - 1)
+				cout << "\t";
 		}
 		cout << endl;
 	}

@@ -2,7 +2,7 @@
 //Implements idea of Uni Melb team from KDD Cup'09. 
 //"levels with fewer than 100 instances in the training data are aggregated into a "small" category, 
 //those with 100-500 instances are aggregated into a "medium" category, and those with 500-1000 instances 
-//aggregated into a "large" category." Here we adjust absolute Uni Melb thresholds into thresholds relative 
+//aggregated into a "large" category." Here we take a minimum between absolute Uni Melb thresholds and thresholds relative 
 // to the train set size: < 1/500, 1/500 - 1/100, 1/100 - 1/50. 
 //
 //Here "small" = -3, "medium" = -2, "large" = -1.
@@ -136,7 +136,8 @@ int main(int argc, char* argv[])
 					cout << countId;
 				nomNo++;
 			}
-			cout << "\t";
+			if(attrNo < attrN - 1)
+				cout << "\t";
 		}
 		cout << endl;
 	}
