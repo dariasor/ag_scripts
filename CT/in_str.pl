@@ -11,25 +11,18 @@ sub Main($)
 	my %hash = ();
 	foreach my $bline (@blines) {
         chomp($bline);
-		my $bkey = $bline;
-        if ($bline =~ /^([^\t]*)\t/) {
-            $bkey = $1;
-        }
-		$hash{$bkey} = 1;
+		$hash{$bline} = 1;
 	}	
 
 	while (<STDIN>) {
 		my $aline = $_;
 		chomp($aline);
-		my $akey = $aline;
-		if ($aline =~ /^([^\t]*)\t/) {
-			$akey = $1;
+		if (exists $hash{$aline}) {
+			print "1\n";
+		} else {
+			print "0\n";
 		}
-		chomp($akey);
-		if (exists $hash{$akey}) {
-			print "$aline\n";
-		} 		
-     	}
+    }
 }
 
 Main($ARGV[0]);
