@@ -125,6 +125,7 @@ int main(int argc, char* argv[])
 	fdata.close();
 
 //Output new attribute file
+	bool tarFound = false;
 	for(int attrNo = 0; attrNo < attrN; attrNo++)
 	{
 		fnew << attrNames[attrNo] << ": ";
@@ -133,10 +134,16 @@ int main(int argc, char* argv[])
 		else
 			fnew << "0,1";
 		if (tarName.compare(attrNames[attrNo]) == 0)
+		{
 			fnew << "(class)";
+			tarFound = true;
+		}
 
 		fnew << "." << endl;
 	}
+	if (!tarFound)
+		throw string("Could not find the target attribute ") + tarName;
+
 	fnew << "contexts:" << endl;
 	for(int attrNo = 0; attrNo < attrN; attrNo++)
 		if(attrFlags[attrNo] == 0)
