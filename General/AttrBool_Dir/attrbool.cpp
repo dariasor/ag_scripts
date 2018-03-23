@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 		fnew << "." << endl;
 	}
 	if (!tarFound)
-		throw string("Could not find the target attribute ") + tarName;
+		throw string("Error: Could not find the target attribute ") + tarName;
 
 	fnew << "contexts:" << endl;
 	for(int attrNo = 0; attrNo < attrN; attrNo++)
