@@ -3,6 +3,8 @@
 //automatically identifies the empty line after the header. 
 //for more information see --help.
 //
+// Some subsampling options at this point work only for files_int == 2 (train/validation split)
+//
 //(c) Daria Sorokina, Yichen Zhou
 
 #pragma warning(disable : 4996)
@@ -38,11 +40,14 @@ enum DATASET
 void outStr(string& str, fstream& fout, char delch, bool outDta);
 int atoiExt(char* str);
 double atofExt(char* str);
+double atofExt(string str);
 string trim(string s);
+string cutCol(int inColNo, string str, char delch);
 
 int main(int argc, char* argv[])
 {
-	string usage("Usage: rnd_tv_dta --input file_str --stem stem_str [--rand rand_int] [--in delim_str] [--out outtype_str] [--header] [--files-n files_int] [--group group_int] [--group-method group_method] [--train train_flt] [--valid valid_flt] \n\n\
+	string usage("Usage: rnd_tv_dta --input file_str --stem stem_str [--rand rand_int] [--in delim_str] [--out outtype_str] [--header] [--files-n files_int] [--group group_int] [--group-method group_method] \
+		[--train train_flt] [--valid valid_flt] [--target target_int] [--train-zero train_zero_flt] [--valid-zero valid_zero_flt]\n\n\
 --input file_str\n\t\
 file_str is the input file name, required parameter\n\n\
 --stem stem_str\n\t\
@@ -52,7 +57,8 @@ rand_int is the random seed, default = 1\n\n\
 --in delim_str\n\t\
 delim_str identifies the delimiter in the input file, \"dta\" for tab and \"csv\" for comma. Default = \"dta\".\n\n\
 --out outtype_str\n\t\
-outtype_str identifies the format of the output file. \"dta\" for TreeExtra format(no header, missing values encoded as \"?\") and \"tsv\" for gbm format(header present, missing values encoded as omissions between delimiters). Default = \"dta\".\n\n\
+outtype_str identifies the format of the output file. \"dta\" for TreeExtra format(no header, missing values encoded as \"?\") and \"tsv\" for gbm format(header present, missing values encoded as omissions\
+ between delimiters). Default = \"dta\".\n\n\
 --header\n\t\
 Indicates that the input file has header, by default it does not\n\n\
 --files-n files_int\n\t\
@@ -65,6 +71,12 @@ train_flt is the proportion of the data that should go into the training set. De
 valid_flt is the proportion of the data that should go into the validation set. Default = 0.5.\n\n\
 --group-method group_method\n\t\
 group_method decides how we sample the points when grouping is on. 0: sample groups, keep all points in a group; 1: sample points from different groups for each data set. Default = 0.\n\n\
+--target target_int\n\t\
+target_int is the number of the column containing target. Needed only if --train_zero and/or --valid_zero are set. Default = 1.\n\n\
+--train-zero train_zero_flt\n\t\
+train_zero_flt is the probability to end up in the training data set for the data points with the target equal to zero. Default = train_flt.\n\n\
+--valid-zero valid_zero_flt\n\t\
+valid_zero_flt is the probability to end up in the training data set for the data points with the target equal to zero. Default = valid_flt.\n\n\
 		");
 	try{
 
@@ -74,10 +86,10 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 
 	//set up default values of extra arguments
 	char delch = '\t';
-	bool hasHeader = false, all = false, test = false, doGroup = false, outDta = true;
+	bool hasHeader = false, all = false, test = false, doGroup = false, outDta = true, getTarget = false;
 	int groupMethod = 0;
-	int groupNo = 0, seed = 1;
-	double propVal = 0.5, propTrain = 0.5;
+	int groupNo = -1, targetNo = -1, seed = 1;
+	double propVal = 0.5, propTrain = 0.5, propValZero = -1, propTrainZero = -1;
 	double groupPropVal = 1, groupPropTrain = 1;
 	string outType("dta");
 
@@ -149,18 +161,35 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 			groupNo = atoiExt(argv[argNo]) - 1;
 			doGroup = (groupNo >= 0);
 		}
+		else if (!args[argNo - 1].compare("--target"))
+			targetNo = atoiExt(argv[argNo]) - 1;
 		else if(!args[argNo - 1].compare("--group-method"))
 			groupMethod = atoiExt(argv[argNo]);
 		else if(!args[argNo - 1].compare("--train"))
 			propTrain = atofExt(argv[argNo]);
 		else if(!args[argNo - 1].compare("--valid"))
 			propVal = atofExt(argv[argNo]);
+		else if (!args[argNo - 1].compare("--train-zero"))
+			propTrainZero = atofExt(argv[argNo]);
+		else if (!args[argNo - 1].compare("--valid-zero"))
+			propValZero = atofExt(argv[argNo]);
 		else
 			throw usage;
 	}
 
 	if(!(hasInput && hasStem))
 		throw usage;
+
+	if(propTrainZero == -1)
+		propTrainZero = propTrain;
+	if(propValZero == -1)
+		propValZero = propVal;
+	if((propTrain != propTrainZero) || (propVal != propValZero))
+	{	
+		getTarget = true;
+		if(targetNo == -1)
+			throw string("Error: target column number is not specified. ");
+	}
 
 	//decide the proportion of each group
 	if(doGroup && (groupMethod == 1)){
@@ -175,6 +204,8 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 			groupPropVal = 0.333;
 			propTrain /= groupPropTrain;
 			propVal /= groupPropVal;
+			propTrainZero /= groupPropTrain;
+			propValZero /= groupPropVal;
 		}
 		else  //train and valid
 		{
@@ -182,6 +213,8 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 			groupPropVal = 0.5;
 			propTrain /= groupPropTrain;
 			propVal /= groupPropVal;
+			propTrainZero /= groupPropTrain;
+			propValZero /= groupPropVal;
 		}
 	}
 
@@ -244,37 +277,31 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 	simap groups; //needed if grouping is on
 	string groupID;
 	simap::iterator groupIt = groups.end();
+	double targetVal;
 
-	if(!doGroup || (groupMethod == 0))
+	if(!doGroup)
 	{
 		for(int i = 1; !fdata.fail(); i++)
 		{
 			if(i % 100000 == 0) cout << "read " << i << " lines" << endl;
 
 				string str(buf);
-
-				if(doGroup)
-				{
-					string::size_type prevDelim = -1;
-					for(int colNo = 0; colNo < groupNo; colNo++)
-						prevDelim = str.find(delch, prevDelim + 1);
-					string::size_type delim = str.find(delch, prevDelim + 1);
-					groupID = str.substr(prevDelim + 1, delim - prevDelim - 1);
-					groupIt = groups.find(groupID);
-				}
+				if(getTarget)
+					targetVal = atofExt(cutCol(targetNo, str, delch));
 
 				enum DATASET dataset;
 				double randCoef = (double) rand() / RAND_MAX;
 				if(all || 
-					(groupIt != groups.end()) && (groupIt->second == 1) ||
-					(groupIt == groups.end()) && (randCoef < propTrain)
+					(getTarget && (targetVal == 0) && (randCoef < propTrainZero)) ||
+					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propTrain))
 				  )
 				{//output to train
 					outStr(str, ftrain, delch, outDta);
 					dataset = TRAIN;
 				}
-				else if((groupIt != groups.end()) && (groupIt->second == 2) ||
-						(groupIt == groups.end() && (randCoef >= (1 - propVal)))
+				else if(
+						(getTarget && (targetVal == 0) && (randCoef >= (1 - propValZero))) ||
+						((getTarget && (targetVal != 0) || !getTarget) && (randCoef >= (1 - propVal)))
 						)
 				{//output to validation
 					outStr(str, fvalid, delch, outDta);
@@ -284,10 +311,47 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 						outStr(str, ftest, delch, outDta);
 					dataset = TEST;
 				}
-				if(doGroup && (groupIt == groups.end()))
-					groups.insert(simap::value_type(groupID, dataset));
 
 				fdata.getline(buf, lineLen); 
+		}
+	}
+	else if(groupMethod == 0)
+	{
+		for (int i = 1; !fdata.fail(); i++)
+		{
+			if (i % 100000 == 0) cout << "read " << i << " lines" << endl;
+
+			string str(buf);
+			groupID = cutCol(groupNo, str, delch);
+			groupIt = groups.find(groupID);
+
+			enum DATASET dataset;
+			double randCoef = (double)rand() / RAND_MAX;
+			if(all ||
+				(groupIt != groups.end()) && (groupIt->second == 1) ||
+				(groupIt == groups.end()) && (randCoef < propTrain)
+				)
+			{//output to train
+				outStr(str, ftrain, delch, outDta);
+				dataset = TRAIN;
+			}
+			else if(
+				(groupIt != groups.end()) && (groupIt->second == 2) ||
+				(groupIt == groups.end() && (randCoef >= (1 - propVal)))
+				)
+			{//output to validation
+				outStr(str, fvalid, delch, outDta);
+				dataset = VALID;
+			}
+			else {
+				if(test) //output to test 
+					outStr(str, ftest, delch, outDta);
+				dataset = TEST;
+			}
+			if(groupIt == groups.end())
+				groups.insert(simap::value_type(groupID, dataset));
+
+			fdata.getline(buf, lineLen);
 		}
 	}
 	else if(groupMethod == 1)
@@ -299,13 +363,11 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 
 			if(doGroup)
 			{
-				string::size_type prevDelim = -1;
-				for(int colNo = 0; colNo < groupNo; colNo++)
-					prevDelim = str.find(delch, prevDelim + 1);
-				string::size_type delim = str.find(delch, prevDelim + 1);
-				groupID = str.substr(prevDelim + 1, delim - prevDelim - 1);
+				groupID = cutCol(groupNo, str, delch);
 				groupIt = groups.find(groupID);
 			}
+			if(getTarget)
+				targetVal = atofExt(cutCol(targetNo, str, delch));
 
 			enum DATASET dataset;
 			double randGroupCoef = (double) rand() / RAND_MAX;
@@ -315,7 +377,9 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 			   ((groupIt == groups.end()) && (randGroupCoef < groupPropTrain))
 			  )
 			{//output to train
-				if(randCoef < propTrain) 
+
+				if((getTarget && (targetVal == 0) && (randCoef < propTrainZero)) ||
+					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propTrain)))
 					outStr(str, ftrain, delch, outDta);
 				dataset = TRAIN;
 			}
@@ -323,7 +387,8 @@ group_method decides how we sample the points when grouping is on. 0: sample gro
 					((groupIt == groups.end()) && (randGroupCoef >= 1 - groupPropVal))
 					)
 			{//output to validation
-				if(randCoef < propVal) 
+				if((getTarget && (targetVal == 0) && (randCoef < propValZero)) ||
+					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propVal)))
 					outStr(str, fvalid, delch, outDta);
 				dataset = VALID;
 			} else {
@@ -401,7 +466,6 @@ int atoiExt(char* str)
 	return (int)value;
 }
 
-//converts string to int, throws error if the string is unconvertable
 //converts string to double, throws error if the string is unconvertable
 double atofExt(char* str)
 {
@@ -410,6 +474,11 @@ double atofExt(char* str)
 	if((end == str) || (*end != '\0'))
 		throw  "Error: non-numeric value for a numeric argument.\n";
 	return value;
+}
+
+double atofExt(string str)
+{
+	return atofExt((char*)str.c_str());
 }
 
 //slightly modified trim function from stack overflow by Evan Teran
@@ -422,3 +491,11 @@ string trim(string s) {
 	return s;
 }
 
+string cutCol(int inColNo, string str, char delch)
+{
+	string::size_type prevDelim = -1;
+	for (int colNo = 0; colNo < inColNo; colNo++)
+		prevDelim = str.find(delch, prevDelim + 1);
+	string::size_type delim = str.find(delch, prevDelim + 1);
+	return str.substr(prevDelim + 1, delim - prevDelim - 1);
+}
