@@ -25,17 +25,18 @@
 
 using namespace std;
 
-typedef map<string, int> simap;
-typedef vector<string> stringv;
-
 const int lineLen = 500000; //max size that I so far needed
 const int shLineLen = 16;
 enum DATASET
 {
+	NONE = 0,
 	TRAIN = 1,
 	VALID = 2,
 	TEST = 3
 };
+
+typedef map<string, enum DATASET> sDmap;
+typedef vector<string> stringv;
 
 void outStr(string& str, fstream& fout, char delch, bool outDta);
 int atoiExt(char* str);
@@ -47,7 +48,7 @@ string cutCol(int inColNo, string str, char delch);
 int main(int argc, char* argv[])
 {
 	string usage("Usage: rnd_tv_dta --input file_str --stem stem_str [--rand rand_int] [--in delim_str] [--out outtype_str] [--header] [--files-n files_int] [--group group_int] [--group-method group_method] \
-		[--train train_flt] [--valid valid_flt] [--target target_int] [--train-zero train_zero_flt] [--valid-zero valid_zero_flt]\n\n\
+[--train train_flt] [--valid valid_flt] [--target target_int] [--train-zero train_zero_flt] [--valid-zero valid_zero_flt]\n\n\
 --input file_str\n\t\
 file_str is the input file name, required parameter\n\n\
 --stem stem_str\n\t\
@@ -66,9 +67,9 @@ files_int indicates the number of the output files : 1, 2 or 3. 2 means split in
 --group group_int\n\t\
 group_int is the number of the column containing group values. 0 means no such column exists. Data points with identical group values end up in the same output file. Default = 0.\n\n\
 --train train_flt\n\t\
-train_flt is the proportion of the data that should go into the training set. Default = 0.5.\n\n\
+train_flt is the proportion of the data that should go into the training set. Default = switch(files_int) {case 1: 1.0; case 2: 0.5; case 3: 0.333}.\n\n\
 --valid valid_flt\n\t\
-valid_flt is the proportion of the data that should go into the validation set. Default = 0.5.\n\n\
+valid_flt is the proportion of the data that should go into the validation set. Default = switch(files_int) {case 2: 0.5; case 3: 0.333}.\n\n\
 --group-method group_method\n\t\
 group_method decides how we sample the points when grouping is on. 0: sample groups, keep all points in a group; 1: sample points from different groups for each data set. Default = 0.\n\n\
 --target target_int\n\t\
@@ -89,7 +90,7 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 	bool hasHeader = false, all = false, test = false, doGroup = false, outDta = true, getTarget = false;
 	int groupMethod = 0;
 	int groupNo = -1, targetNo = -1, seed = 1;
-	double propVal = 0.5, propTrain = 0.5, propValZero = -1, propTrainZero = -1;
+	double propVal = -1, propTrain = -1, propValZero = -1, propTrainZero = -1;
 	double groupPropVal = 1, groupPropTrain = 1;
 	string outType("dta");
 
@@ -142,16 +143,27 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 			{
 				all = true;
 				test = false;
+				if(propTrain == -1)
+					propTrain = 1.0;
+				propVal = 0.0;
 			}
 			else if(!args[argNo].compare("2"))
 			{
 				all = false;
 				test = false;
+				if(propTrain == -1)
+					propTrain = 0.5;
+				if(propVal == -1)
+					propVal = 0.5;
 			}
 			else if(!args[argNo].compare("3"))
 			{
 				all = false;
 				test = true;
+				if(propTrain == -1)
+					propTrain = 0.333;
+				if(propVal == -1)
+					propVal = 0.333;
 			}
 			else
 				throw usage;
@@ -190,6 +202,9 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 		if(targetNo == -1)
 			throw string("Error: target column number is not specified. ");
 	}
+
+	if(all && (propVal || propValZero))
+		throw string("Error: cannot set validation set parameters in the mode --files-n 1");
 
 	//decide the proportion of each group
 	if(doGroup && (groupMethod == 1)){
@@ -274,9 +289,9 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 		fdata.getline(buf, lineLen); //skip empty string
 	}
 	
-	simap groups; //needed if grouping is on
+	sDmap groups; //needed if grouping is on
 	string groupID;
-	simap::iterator groupIt = groups.end();
+	sDmap::iterator groupIt = groups.end();
 	double targetVal;
 
 	if(!doGroup)
@@ -289,28 +304,19 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 				if(getTarget)
 					targetVal = atofExt(cutCol(targetNo, str, delch));
 
-				enum DATASET dataset;
 				double randCoef = (double) rand() / RAND_MAX;
-				if(all || 
+				if(
 					(getTarget && (targetVal == 0) && (randCoef < propTrainZero)) ||
 					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propTrain))
 				  )
-				{//output to train
 					outStr(str, ftrain, delch, outDta);
-					dataset = TRAIN;
-				}
-				else if(
-						(getTarget && (targetVal == 0) && (randCoef >= (1 - propValZero))) ||
-						((getTarget && (targetVal != 0) || !getTarget) && (randCoef >= (1 - propVal)))
-						)
-				{//output to validation
+				else if ( !all && (
+						 (getTarget && (targetVal == 0) && (randCoef >= (1 - propValZero))) ||
+						 ((getTarget && (targetVal != 0) || !getTarget) && (randCoef >= (1 - propVal)))
+						))
 					outStr(str, fvalid, delch, outDta);
-					dataset = VALID;
-				} else {
-					if(test) //output to test 
-						outStr(str, ftest, delch, outDta);
-					dataset = TEST;
-				}
+				else if(test)
+					outStr(str, ftest, delch, outDta);
 
 				fdata.getline(buf, lineLen); 
 		}
@@ -325,31 +331,30 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 			groupID = cutCol(groupNo, str, delch);
 			groupIt = groups.find(groupID);
 
-			enum DATASET dataset;
+			enum DATASET dataset = NONE;
 			double randCoef = (double)rand() / RAND_MAX;
-			if(all ||
-				(groupIt != groups.end()) && (groupIt->second == 1) ||
+			if(
+				(groupIt != groups.end()) && (groupIt->second == TRAIN) ||
 				(groupIt == groups.end()) && (randCoef < propTrain)
 				)
 			{//output to train
 				outStr(str, ftrain, delch, outDta);
 				dataset = TRAIN;
 			}
-			else if(
-				(groupIt != groups.end()) && (groupIt->second == 2) ||
+			else if(!all && (
+				(groupIt != groups.end()) && (groupIt->second == VALID) ||
 				(groupIt == groups.end() && (randCoef >= (1 - propVal)))
-				)
+				))
 			{//output to validation
 				outStr(str, fvalid, delch, outDta);
 				dataset = VALID;
 			}
-			else {
-				if(test) //output to test 
-					outStr(str, ftest, delch, outDta);
+			else if(test){
+				outStr(str, ftest, delch, outDta);
 				dataset = TEST;
 			}
 			if(groupIt == groups.end())
-				groups.insert(simap::value_type(groupID, dataset));
+				groups.insert(sDmap::value_type(groupID, dataset));
 
 			fdata.getline(buf, lineLen);
 		}
@@ -369,35 +374,35 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 			if(getTarget)
 				targetVal = atofExt(cutCol(targetNo, str, delch));
 
-			enum DATASET dataset;
+			enum DATASET dataset = NONE;
 			double randGroupCoef = (double) rand() / RAND_MAX;
 			double randCoef = (double) rand() / RAND_MAX;
-			if(all || 
-			   ((groupIt != groups.end()) && (groupIt->second == 1)) ||
+			if(
+			   ((groupIt != groups.end()) && (groupIt->second == TRAIN)) ||
 			   ((groupIt == groups.end()) && (randGroupCoef < groupPropTrain))
 			  )
 			{//output to train
-
 				if((getTarget && (targetVal == 0) && (randCoef < propTrainZero)) ||
 					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propTrain)))
 					outStr(str, ftrain, delch, outDta);
 				dataset = TRAIN;
 			}
-			else if(((groupIt != groups.end()) && (groupIt->second == 2)) ||
+			else if(!all && (
+					((groupIt != groups.end()) && (groupIt->second == VALID)) ||
 					((groupIt == groups.end()) && (randGroupCoef >= 1 - groupPropVal))
-					)
+					))
 			{//output to validation
 				if((getTarget && (targetVal == 0) && (randCoef < propValZero)) ||
 					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propVal)))
 					outStr(str, fvalid, delch, outDta);
 				dataset = VALID;
-			} else {
-				if(test) //output to test 
-					outStr(str, ftest, delch, outDta);
+			} else if(test){
+				 //output to test 
+				outStr(str, ftest, delch, outDta);
 				dataset = TEST;
 			}
 			if(doGroup && (groupIt == groups.end()))
-				groups.insert(simap::value_type(groupID, dataset));
+				groups.insert(sDmap::value_type(groupID, dataset));
 
 			fdata.getline(buf, lineLen); 
 		}
