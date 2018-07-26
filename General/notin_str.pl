@@ -25,7 +25,7 @@ sub Main($)
 		if (!exists $hash{$akey}) {
 			print "$akey\n";
 		} 		
-     	}
+    }
 }
 
 Main($ARGV[0]);
