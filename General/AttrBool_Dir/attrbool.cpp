@@ -27,7 +27,7 @@ typedef vector<int> intv;
 typedef vector<string> stringv;
 typedef numeric_limits<float> flim;
 
-#define LINE_LEN 20000	//maximum length of line in the input file
+#define LINE_LEN 500000	//maximum length of line in the input file
 #define QNAN flim::quiet_NaN()
 
 #if defined(__VISUALC__)
