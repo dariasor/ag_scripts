@@ -36,8 +36,8 @@ do
 				bt_train -t $8/$1 -v $8/$2 -r $8/$3.attr -a $a -k $6 -l nolog -m model.a.$a.b.$b.bin -b $b -c $5 >> temp.txt
 				tail -1 temp.txt >> $out
 				tail -1 temp.txt
-				tail -2 log.txt >> $out
-				tail -2 log.txt
+				tail -4 log.txt | head -2 >> $out
+				tail -4 log.txt | head -2
 				mv log.txt log.a.$a.b.$b.txt
 				mv bagging_rms.txt bagging_rms.a.$a.b.$b.txt
 				if [ "$5" == "roc" ]; then
