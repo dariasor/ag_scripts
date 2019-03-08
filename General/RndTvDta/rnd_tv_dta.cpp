@@ -309,7 +309,10 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 					(getTarget && (targetVal == 0) && (randCoef < propTrainZero)) ||
 					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propTrain))
 				  )
+				{
 					outStr(str, ftrain, delch, outDta);
+					cout << "Debug 1 " << randCoef << " " << propTrain << "\n";
+				}
 				else if ( !all && (
 						 (getTarget && (targetVal == 0) && (randCoef >= (1 - propValZero))) ||
 						 ((getTarget && (targetVal != 0) || !getTarget) && (randCoef >= (1 - propVal)))
@@ -340,6 +343,7 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 			{//output to train
 				outStr(str, ftrain, delch, outDta);
 				dataset = TRAIN;
+				cout << "Debug 2" << randCoef << propTrain << "\n";
 			}
 			else if(!all && (
 				(groupIt != groups.end()) && (groupIt->second == VALID) ||
@@ -384,7 +388,10 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 			{//output to train
 				if((getTarget && (targetVal == 0) && (randCoef < propTrainZero)) ||
 					((getTarget && (targetVal != 0) || !getTarget) && (randCoef < propTrain)))
+				{
 					outStr(str, ftrain, delch, outDta);
+					cout << "Debug 3" << endl;
+				}
 				dataset = TRAIN;
 			}
 			else if(!all && (
