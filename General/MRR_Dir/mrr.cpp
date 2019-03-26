@@ -28,6 +28,16 @@ typedef pair<string, int> sipair;
 typedef vector<sipair> sipairv;
 typedef vector<string> stringv;
 
+#define LINE_LEN 20000	//maximum length of line in the input file
+
+//extends fstream::getline with check on exceeding the buffer size
+void getLineExt(fstream& fin, char* buf)
+{
+	fin.getline(buf, LINE_LEN);
+	if(fin.gcount() == LINE_LEN - 1)
+		throw string("Erros: lines in an input file exceed current limit.");
+}
+
 double atofExt(string str)
 {
 	char *end;
@@ -141,6 +151,7 @@ int main(int argc, char* argv[])
 	//load target and prediction values;
 	doublev tars, preds; 
 	stringv groups;
+	char buf[LINE_LEN];	//buffer for reading strings from input files
 	double hold_d;
 	string hold_s;
 	fpred >> hold_s;
@@ -151,7 +162,7 @@ int main(int argc, char* argv[])
 	catch(...) {
 		//header present, remove it form all columns
 		ftar >> hold_s;
-		fgroup >> hold_s;
+		fgroup.getLineExt(buf, LINE_LEN);
 		fpred >> hold_s;
 		hold_d = atofExt(hold_s);
 	}
@@ -168,11 +179,11 @@ int main(int argc, char* argv[])
 		tars.push_back(hold_d);
 		ftar >> hold_d;
 	}
-	fgroup >> hold_s;
-	while(!fgroup.fail())
+	fgroup.getLineExt(buf, LINE_LEN);
+	while(fgroup.gcount())
 	{
-		groups.push_back(hold_s);
-		fgroup >> hold_s;
+		groups.push_back((string)buf);
+		fgroup.getLineExt(buf, LINE_LEN);
 	}
 	if(tars.size() != preds.size())
 		throw string("Error: different number of values in targets and predictions files");
