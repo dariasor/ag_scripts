@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
 	catch(...) {
 		//header present, remove it form all columns
 		ftar >> hold_s;
-		fgroup.getLineExt(buf, LINE_LEN);
+		getLineExt(fgroup, buf);
 		fpred >> hold_s;
 		hold_d = atofExt(hold_s);
 	}
@@ -179,11 +179,11 @@ int main(int argc, char* argv[])
 		tars.push_back(hold_d);
 		ftar >> hold_d;
 	}
-	fgroup.getLineExt(buf, LINE_LEN);
+	getLineExt(fgroup, buf);
 	while(fgroup.gcount())
 	{
 		groups.push_back((string)buf);
-		fgroup.getLineExt(buf, LINE_LEN);
+		getLineExt(fgroup, buf);
 	}
 	if(tars.size() != preds.size())
 		throw string("Error: different number of values in targets and predictions files");
