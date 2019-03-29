@@ -3,6 +3,7 @@
 	//- either an "all cont" attribute file, or a list of attributes, one name per line in the right order 
 	//- the data file
 	//- the name of the class attribute
+	//- (optional) the name of the weight attribute 
 //produces a new attribute file with boolean features
 //marked as "0,1" and useless (only 0 values) features as "never"
 //important note: it loses all information about original types of attributes (in particular, nominals), 
@@ -48,8 +49,8 @@ int main(int argc, char* argv[])
 {
 	try{
 	//check presence of input arguments
-	if(argc != 5)
-		throw string("Usage: attrbool _attr_file_ _data_file_ _new_attr_file_ _target_name_");
+	if((argc < 5) || (argc > 6))
+		throw string("Usage: attrbool _attr_file_ _data_file_ _new_attr_file_ _target_name_ [weight_name]");
 
 	//open files, check that they are there
 	fstream fattr(argv[1], ios_base::in);
@@ -65,6 +66,7 @@ int main(int argc, char* argv[])
 		throw string("Error: failed to open data file ") + string(argv[3]);
 
 	string tarName(argv[4]);
+	string weightName((argc == 6) ? argv[5] : "");
 
 	//Read attribute file	
 	
@@ -133,12 +135,13 @@ int main(int argc, char* argv[])
 			fnew << "cont"; 
 		else
 			fnew << "0,1";
-		if (tarName.compare(attrNames[attrNo]) == 0)
+		if(tarName.compare(attrNames[attrNo]) == 0)
 		{
 			fnew << "(class)";
 			tarFound = true;
 		}
-
+		if((argc == 6) && (weightName.compare(attrNames[attrNo]) == 0))
+			fnew << "(weight)";
 		fnew << "." << endl;
 	}
 	if (!tarFound)
