@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ $# -ne 3 ]
+if [ $# -lt 3 ]
 then
     echo "Usage: tsv_to_dta.sh _stem_ _target_ _unused_features_file_ [weight]"
     exit
