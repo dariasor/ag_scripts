@@ -212,7 +212,7 @@ void readData(char* buf, int buflen, floatv& retv, int retvlen)
 	{
 		itemstr >> singleItem;
 		if(itemstr.fail())
-			throw string("Error: fewer attributes than in the attribute file.");
+			throw string("Error: fewer attributes than in the list of attributes.");
 		singleItem = string(singleItem.c_str()); //to trim '\0'
 		if(singleItem.compare("?"))
 		{//should be a number, convert it
@@ -225,6 +225,6 @@ void readData(char* buf, int buflen, floatv& retv, int retvlen)
 
 	itemstr >> singleItem;
 	if(!itemstr.fail())
-		throw string("Error: more attributes than in the attribute file.");
+		throw string("Error: more attributes than in the list of attributes.");
 	
 }
