@@ -77,7 +77,7 @@ target_int is the number of the column containing target. Needed only if --train
 --train-zero train_zero_flt\n\t\
 train_zero_flt is the probability to end up in the training data set for the data points with the target equal to zero. Default = train_flt.\n\n\
 --valid-zero valid_zero_flt\n\t\
-valid_zero_flt is the probability to end up in the training data set for the data points with the target equal to zero. Default = valid_flt.\n\n\
+valid_zero_flt is the probability to end up in the validation data set for the data points with the target equal to zero. Default = valid_flt.\n\n\
 		");
 	try{
 
@@ -224,9 +224,9 @@ valid_zero_flt is the probability to end up in the training data set for the dat
 		}
 		else  //train and valid
 		{
-			groupPropTrain = 0.5;
-			groupPropVal = 0.5;
-			propTrain /= groupPropTrain;
+			groupPropTrain = propTrain / (propVal + propTrainZero);
+			groupPropVal = 1.0 - groupPropTrain;
+			propTrain /= groupPropTrain; 
 			propVal /= groupPropVal;
 			propTrainZero /= groupPropTrain;
 			propValZero /= groupPropVal;
