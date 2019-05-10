@@ -224,7 +224,7 @@ valid_zero_flt is the probability to end up in the validation data set for the d
 		}
 		else  //train and valid
 		{
-			groupPropTrain = propTrain / (propVal + propTrainZero);
+			groupPropTrain = propTrain / (propVal + propTrain);
 			groupPropVal = 1.0 - groupPropTrain;
 			propTrain /= groupPropTrain; 
 			propVal /= groupPropVal;
