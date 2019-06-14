@@ -192,6 +192,12 @@ valid_zero_flt is the probability to end up in the validation data set for the d
 	if(!(hasInput && hasStem))
 		throw usage;
 
+	//propTrain and propVal can only be undefined if no files-n parameter provided, default value for which is 2
+	if(propTrain == -1)
+		propTrain = 0.5;
+	if(propVal == -1)
+		propVal = 0.5;
+
 	if(propTrainZero == -1)
 		propTrainZero = propTrain;
 	if(propValZero == -1)
@@ -459,6 +465,8 @@ void outStr(string& str_in, fstream& fout, char delch, bool outDta)
 		str = str.substr(delim + 1);
 	}
 	fout << endl;
+	if(fout.fail())
+		throw string("Error: failed to write to the disk.");
 }
 
 //converts string to int, throws error if the string is unconvertable
@@ -467,7 +475,7 @@ int atoiExt(char* str)
 	char *end;
 	long value = strtol(str, &end, 10);
 	if((end == str) || (*end != '\0'))
-		throw "Error: non-numeric value for a numeric argument.\n";
+		throw string("Error: non-numeric value for a numeric argument.\n");
 	return (int)value;
 }
 
@@ -477,7 +485,7 @@ double atofExt(char* str)
 	char *end;
 	double value = strtod(str, &end);
 	if((end == str) || (*end != '\0'))
-		throw  "Error: non-numeric value for a numeric argument.\n";
+		throw string("Error: non-numeric value for a numeric argument.\n");
 	return value;
 }
 
