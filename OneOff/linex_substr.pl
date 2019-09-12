@@ -7,14 +7,14 @@ sub Main($$$)
 	my $fname = $_[0];
 	my $bkeyno = $_[1] - 1;
 	my $akeyno = $_[2] - 1;
-     	open (my $in, "<", $fname) or die $!;
+   	open (my $in, "<", $fname) or die $!;
 	my @blines = <$in>;
 	
 	my @substrings = ();
 	foreach my $bline (@blines) {
         chomp($bline);
 		my @bfeatures = split('\t', $bline);
-		push @substrings $bfeatures[$bkeyno];
+		push @substrings, $bfeatures[$bkeyno];
 		
 	}	
 
