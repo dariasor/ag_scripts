@@ -2,7 +2,7 @@
 use strict;
 use warnings "all";
 
-sub Main($)
+sub Main()
 {
 	my $thresh = $_[0];
 	while (<STDIN>) {
@@ -11,12 +11,12 @@ sub Main($)
 
 		if ($line eq '?') {
 			print "?\n";
-		}elsif ($line <= $thresh) {
-			print "0\n";         
+		}elsif ($line == "0") {
+			print "1\n";         
 		} else {
-			print "1\n";
+			print "0\n";
 		}
 	}
 }
 
-Main($ARGV[0]);
+Main();
