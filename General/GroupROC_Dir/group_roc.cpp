@@ -165,7 +165,6 @@ double group_roc(doublev& preds_in, doublev& tars_in, stringv& groups_in, bool s
 		if((itemNo == itemN - 1) || (groups[itemNo + 1].compare(curGr) != 0))
 		{
 			double rocVal = roc(preds.begin() + curBegins, tars.begin() + curBegins, itemNo + 1 - curBegins);
-			cout << rocVal << endl;
 			if(!isnan(rocVal))
 			{
 				meanVal += rocVal;
