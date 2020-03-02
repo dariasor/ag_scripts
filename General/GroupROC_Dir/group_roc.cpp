@@ -186,8 +186,8 @@ int main(int argc, char* argv[])
 	try{
 
 		//check presence of input arguments
-		if(argc != 4)
-			throw string("Usage: group_roc _targets_ _predictions_ _groups_");
+		if(argc != 5)
+			throw string("Usage: group_roc _targets_ _predictions_ _groups_ sorted|unsorted");
 
 		fstream ftar(argv[1], ios_base::in);
 		if(!ftar)
@@ -200,6 +200,8 @@ int main(int argc, char* argv[])
 		fstream fgroup(argv[3], ios_base::in);
 		if(!fgroup)
 			throw string("Error: failed to open file ") + string(argv[3]);
+
+		bool isSorted = (string(argv[4]).compare("sorted") == 0);
 
 		//load target and prediction values;
 		doublev tars, preds; 
@@ -243,7 +245,7 @@ int main(int argc, char* argv[])
 		if(tars.size() != groups.size())
 			throw string("Error: different number of values in targets and groups files");
 
-		double retVal = group_roc(preds, tars, groups, true);
+		double retVal = group_roc(preds, tars, groups, isSorted);
 		cout << "Group AUC: " << retVal << endl;
 
 	}catch(string err){
