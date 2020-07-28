@@ -41,7 +41,7 @@ typedef numeric_limits<float> flim;
 
 void getLineExt(fstream& fin, char* buf);
 bool mv(string& str);
-string trimSpace(string& str);
+string trimSpace(const string& str);
 void readData(char* buf, int buflen, floatv& retv, int retvlen);
 
 //attrbool _attr_file_ _data_file_ _new_attr_file_
@@ -179,9 +179,9 @@ bool mv(string& str)
 	return !trimstr.compare("?");
 }
 
-//Deletes spaces from the beginning and from the end of the string
+//Not in-place, returns a new string. Deletes spaces from the beginning and from the end of the string
 //By "spaces" I mean spaces only, not white spaces
-string trimSpace(string& str)
+string trimSpace(const string& str)
 {
 	int n = (int)str.size();
 	
@@ -189,10 +189,7 @@ string trimSpace(string& str)
 	for(b = 0; (b < n) && (str[b] == ' '); b++);
 	
 	if(b == n)
-	{
-		str.clear();
 		return string();
-	}
 	
 	int e;
 	for(e = n - 1; (str[e] == ' ') || (str[e] == '\r'); e--);
