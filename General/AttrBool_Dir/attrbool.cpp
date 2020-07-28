@@ -77,6 +77,7 @@ int main(int argc, char* argv[])
 	//read names of attributes, figure out their number
 	stringv attrNames;
 	int attrN; // counter
+	bool tarFound = false;
 	for(attrN = 0; fattr.gcount(); attrN++)
 	{
 		string attrStr(buf);	//a line of an attr file (corresponds to 1 attribute)
@@ -87,12 +88,17 @@ int main(int argc, char* argv[])
 		//parse attr name
 		string::size_type colonPos = attrStr.find(":");
 		string::size_type nameLen = (colonPos == string::npos) ? attrStr.size() : colonPos;
-		string attrName = attrStr.substr(0, nameLen);
-		attrNames.push_back(trimSpace(attrName));
+		string attrName = trimSpace(attrStr.substr(0, nameLen));
+		attrNames.push_back(attrName);
+		if(tarName.compare(attrName) == 0)
+			tarFound = true;
 
 		getLineExt(fattr, buf);
 	}
 	fattr.close();
+	if (!tarFound)
+		throw string("Error: Could not find the target attribute ") + tarName;
+
 
 //Read data file, collect info about attribute values
 	intv attrFlags(attrN, 0); //0 - only zero values, 1 - 0/1 values, 2 - other values present (mv ignored)
@@ -127,7 +133,6 @@ int main(int argc, char* argv[])
 	fdata.close();
 
 //Output new attribute file
-	bool tarFound = false;
 	for(int attrNo = 0; attrNo < attrN; attrNo++)
 	{
 		fnew << attrNames[attrNo] << ": ";
@@ -136,16 +141,12 @@ int main(int argc, char* argv[])
 		else
 			fnew << "0,1";
 		if(tarName.compare(attrNames[attrNo]) == 0)
-		{
 			fnew << "(class)";
-			tarFound = true;
-		}
 		if((argc == 6) && (weightName.compare(attrNames[attrNo]) == 0))
 			fnew << "(weight)";
 		fnew << "." << endl;
 	}
-	if (!tarFound)
-		throw string("Error: Could not find the target attribute ") + tarName;
+
 
 	fnew << "contexts:" << endl;
 	for(int attrNo = 0; attrNo < attrN; attrNo++)
