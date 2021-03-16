@@ -1,8 +1,6 @@
 //prob_roc.cpp: main function of executable prob_roc
 //Calculates probabilistic AUC from predictions and target value. 
 //Targets can take on any values between 0 and 1, predictions can take on any continuous values
-//
-//(c) Daria Sorokina, Carnegie Mellon University, 2009
 
 #pragma warning(disable : 4996)
 

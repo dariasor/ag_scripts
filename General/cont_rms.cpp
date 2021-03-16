@@ -1,8 +1,6 @@
 //cont_rms.cpp: main function of executable cont_rms
 //Calculates root mean squared error from predictions and target values. 
 //Both targets and predictions can take on any continuous values
-//
-//(c) Daria Sorokina, Carnegie Mellon University, 2009
 
 #pragma warning(disable : 4996)
 

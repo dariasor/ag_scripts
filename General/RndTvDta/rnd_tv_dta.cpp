@@ -4,8 +4,6 @@
 //for more information see --help.
 //
 // Some subsampling options at this point work only for files_int == 2 (train/validation split)
-//
-//(c) Daria Sorokina, Yichen Zhou
 
 #pragma warning(disable : 4996)
 #include <fstream>
@@ -237,6 +235,12 @@ valid_zero_flt is the probability to end up in the validation data set for the d
 			propTrainZero /= groupPropTrain;
 			propValZero /= groupPropVal;
 		}
+	}else if(doGroup && (groupMethod == 0)){
+		propTrainZero /= propTrain;
+		if(!all)
+		{
+			propValZero /= propVal;
+		}
 	}
 
 	//open files, check that they are there
@@ -329,40 +333,50 @@ valid_zero_flt is the probability to end up in the validation data set for the d
 	}
 	else if(groupMethod == 0)
 	{
-		for (int i = 1; !fdata.fail(); i++)
+		for(int i = 1; !fdata.fail(); i++)
 		{
-			if (i % 100000 == 0) cout << "read " << i << " lines" << endl;
-
+			if(i % 100000 == 0) cout << "read " << i << " lines" << endl;
 			string str(buf);
-			groupID = cutCol(groupNo, str, delch);
-			groupIt = groups.find(groupID);
+
+			if(doGroup)
+			{
+				groupID = cutCol(groupNo, str, delch);
+				groupIt = groups.find(groupID);
+			}
+			if(getTarget)
+				targetVal = atofExt(cutCol(targetNo, str, delch));
 
 			enum DATASET dataset = NONE;
-			double randCoef = (double)rand() / RAND_MAX;
+			double randGroupCoef = (double) rand() / RAND_MAX;
+			double randCoef = (double) rand() / RAND_MAX;
 			if(
-				(groupIt != groups.end()) && (groupIt->second == TRAIN) ||
-				(groupIt == groups.end()) && (randCoef < propTrain)
+				((groupIt != groups.end()) && (groupIt->second == TRAIN)) ||
+				((groupIt == groups.end()) && (randGroupCoef < propTrain))
 				)
 			{//output to train
-				outStr(str, ftrain, delch, outDta);
+				if((getTarget && (targetVal == 0) && (randCoef < propTrainZero)) ||
+					(getTarget && (targetVal != 0) || !getTarget))
+					outStr(str, ftrain, delch, outDta);
 				dataset = TRAIN;
 			}
 			else if(!all && (
-				(groupIt != groups.end()) && (groupIt->second == VALID) ||
-				(groupIt == groups.end() && (randCoef >= (1 - propVal)))
+				((groupIt != groups.end()) && (groupIt->second == VALID)) ||
+				((groupIt == groups.end()) && (randGroupCoef >= 1 - propVal))
 				))
 			{//output to validation
-				outStr(str, fvalid, delch, outDta);
+				if((getTarget && (targetVal == 0) && (randCoef < propValZero)) ||
+					(getTarget && (targetVal != 0) || !getTarget))
+					outStr(str, fvalid, delch, outDta);
 				dataset = VALID;
-			}
-			else if(test){
+			} else if(test){
+				//output to test 
 				outStr(str, ftest, delch, outDta);
 				dataset = TEST;
 			}
 			if(groupIt == groups.end())
 				groups.insert(sDmap::value_type(groupID, dataset));
 
-			fdata.getline(buf, lineLen);
+			fdata.getline(buf, lineLen); 
 		}
 	}
 	else if(groupMethod == 1)
@@ -407,7 +421,7 @@ valid_zero_flt is the probability to end up in the validation data set for the d
 				outStr(str, ftest, delch, outDta);
 				dataset = TEST;
 			}
-			if(doGroup && (groupIt == groups.end()))
+			if(groupIt == groups.end())
 				groups.insert(sDmap::value_type(groupID, dataset));
 
 			fdata.getline(buf, lineLen); 

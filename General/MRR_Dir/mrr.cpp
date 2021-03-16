@@ -1,8 +1,6 @@
 //mrr.cpp: main function of executable ndcg
 //Calculates MRR from predictions and group and target values. Reciprocal rank (RR) is calculated separately
 //for each group, then averaged.
-//
-//(c) Daria Sorokina
 
 #pragma warning(disable : 4996)
 
