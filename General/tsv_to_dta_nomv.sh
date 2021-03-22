@@ -2,7 +2,7 @@
 
 if [ $# -lt 3 ]
 then
-    echo "Usage: tsv_to_dta.sh _stem_ _target_ _unused_features_file_ [weight]"
+    echo "Usage: tsv_to_dta.sh _stem_ _target_ _unused_features_file_ bool|nobool [weight]"
     exit
 fi
 
@@ -14,7 +14,12 @@ head -1 $stem.tsv | tr '\t' '\n' > $features
 
 tail -n+2 $stem.tsv > $stem.dta
 
-attrbool $features $stem.dta $stem.attr $2 $4
+if [ "$4" == "bool" ]
+then
+    attrbool $features $stem.dta $stem.attr $2 $5
+else
+    attrnobool $features $stem.attr $2 $5
+fi
 
 cp $3 $unused
 perl -pi -e 's/(.)$/$1 never/g' $unused
